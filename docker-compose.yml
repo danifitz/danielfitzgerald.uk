@@ -1,7 +1,7 @@
 version: '3'
 services:
   nginx:
-    image: nginx:1.21.6-alpine
+    image: arm64v8/nginx:1.21.6-alpine
     ports:
       - "80:80"
       - "443:443"
@@ -12,7 +12,7 @@ services:
     # Make nginx reload its configuration (and certificates) every six hours in the background and launches nginx in the foreground
     command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
   certbot:
-    image: certbot/certbot
+    image: certbot/certbot:arm64v8-v1.25.0
     volumes:
       - ./data/certbot/conf:/etc/letsencrypt
       - ./data/certbot/www:/var/www/certbot
