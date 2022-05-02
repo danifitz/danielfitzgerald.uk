@@ -15,38 +15,43 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
+  deploy:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
-        env:
-          SSH_KEY: ${{ secrets.ORACLE_SSH_KEY }}
-          PROD_IP: ${{ secrets.PROD_IP }}
+      - name: Install SSH Key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.ORACLE_SSH_KEY }}
+          known_hosts: unnecessary
 
-      # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
-        run: |
-          echo Adding ssh key
-          ssh-add - <<< "$SSH_KEY"
-          echo Connecting to prod server
-          ssh danielf@$PROD_IP
-          echo Pulling latest changes from branch main
-          cd danielfitzgerald.uk/
-          git pull origin main
-          echo Checking if nginx container is already running
-          if [ "$( docker container inspect -f '{{.State.Running}}' nginx )" == "true" ];
-          then
-            echo Nginx is running
-            echo Building and reloading nginx
-            docker-compose up --detach --build nginx
-          else
-            echo Nginx is not running
-            echo Starting containers
-            docker-compose up
-          fi
-          
+      - name: Adding Known Hosts
+        run: ssh-keyscan -p 22 -H ${{ secrets.PROD_IP }}  >> ~/.ssh/known_hosts
+
+      - name: Deploy with rsync
+        run: rsync -avz -e "ssh -p 22" ./app/ ${{ secrets.SSH_USER }}@${{ secrets.PROD_IP }}:/home/danielf/danielfitzgerald.uk/app/
+      
+      # - name: Restart Web Server
+      #   uses: appleboy/ssh-action@master
+      #   with:
+      #     host: ${{ secrets.PROD_IP }}
+      #     username: ${{ secrets.SSH_USER }}
+      #     key: ${{ secrets.ORACLE_SSH_KEY }}
+      #     port: 22
+      #     script: |
+      #       echo Do something on the server
+      #       cd danielfitzgerald.uk/
+      #       git pull origin main
+      #       echo Checking if nginx container is already running
+      #       if [ "$( docker container inspect -f '{{.State.Running}}' nginx )" == "true" ];
+      #       then
+      #         echo Nginx is running
+      #         echo Building and reloading nginx
+      #         docker-compose up --detach --build nginx
+      #       else
+      #         echo Nginx is not running
+      #         echo Starting containers
+      #         docker-compose up
+      #       fi
