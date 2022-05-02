@@ -24,13 +24,29 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
-
-      # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: echo Hello, world!
+        env:
+          SSH_KEY: ${{ secrets.ORACLE_SSH_KEY }}
+          PROD_IP: ${{ secrets.PROD_IP }}
 
       # Runs a set of commands using the runners shell
       - name: Run a multi-line script
         run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
+          echo Adding ssh key
+          ssh-add - <<< "$SSH_KEY"
+          echo Connecting to prod server
+          ssh danielf@$PROD_IP
+          echo Pulling latest changes from branch main
+          cd danielfitzgerald.uk/
+          git pull origin main
+          echo Checking if nginx container is already running
+          if [ "$( docker container inspect -f '{{.State.Running}}' nginx )" == "true" ];
+          then
+            echo Nginx is running
+            echo Building and reloading nginx
+            docker-compose up --detach --build nginx
+          else
+            echo Nginx is not running
+            echo Starting containers
+            docker-compose up
+          fi
+          
