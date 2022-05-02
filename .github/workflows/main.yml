@@ -24,22 +24,22 @@ jobs:
       - name: Install SSH Key
         uses: shimataro/ssh-key-action@v2
         with:
-          key: ${{ secrets.ORACLE_SSH_KEY }}
+          key: ${{ secrets.SSH_KEY }}
           known_hosts: unnecessary
 
       - name: Adding Known Hosts
-        run: ssh-keyscan -p 22 -H ${{ secrets.PROD_IP }}  >> ~/.ssh/known_hosts
+        run: ssh-keyscan -p ${{ secrets.SSH_PORT }} -H ${{ secrets.SSH_IP }}  >> ~/.ssh/known_hosts
 
       - name: Deploy with rsync
-        run: rsync -avz -e "ssh -p 22" ./app/ ${{ secrets.SSH_USER }}@${{ secrets.PROD_IP }}:/home/danielf/danielfitzgerald.uk/app/
+        run: rsync -avz -e "ssh -p ${{ secrets.SSH_PORT }}" ./app/ ${{ secrets.SSH_USER }}@${{ secrets.SSH_IP }}:/home/danielf/danielfitzgerald.uk/app/
       
       # - name: Restart Web Server
       #   uses: appleboy/ssh-action@master
       #   with:
       #     host: ${{ secrets.PROD_IP }}
       #     username: ${{ secrets.SSH_USER }}
-      #     key: ${{ secrets.ORACLE_SSH_KEY }}
-      #     port: 22
+      #     key: ${{ secrets.SSH_KEY }}
+      #     port: ${{ secrets.SSH_PORT }}
       #     script: |
       #       echo Do something on the server
       #       cd danielfitzgerald.uk/
