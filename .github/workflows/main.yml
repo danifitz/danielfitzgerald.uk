@@ -25,6 +25,7 @@ jobs:
         run: ssh-keyscan -p ${{ secrets.SSH_PORT }} -H ${{ secrets.SSH_IP }}  >> ~/.ssh/known_hosts
 
       - name: Deploy with rsync
+        uses: actions/checkout@v2
         run: rsync -avz -e "ssh -p ${{ secrets.SSH_PORT }}" app/ ${{ secrets.SSH_USER }}@${{ secrets.SSH_IP }}:/home/danielf/danielfitzgerald.uk/app/
       
       # - name: Restart Web Server
